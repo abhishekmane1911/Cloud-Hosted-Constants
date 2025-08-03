@@ -1,44 +1,27 @@
-# Multi-stage build for Node.js API
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Copy all package files
 COPY package*.json ./
-COPY tsconfig*.json ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/dashboard/package.json ./apps/dashboard/
+COPY packages/sdk/package.json ./packages/sdk/
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies
+RUN npm install
 
-# Copy source code
-COPY src/ ./src/
+# Copy the rest of the project
+COPY . .
 
-# Build the application
+# Change to the api directory
+WORKDIR /app/apps/api
+
+# Build the TypeScript code
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine AS production
-
-WORKDIR /app
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S constants -u 1001
-
-# Copy built application and node_modules
-COPY --from=builder --chown=constants:nodejs /app/dist ./dist
-COPY --from=builder --chown=constants:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=constants:nodejs /app/package*.json ./
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node healthcheck.js
-
-# Switch to non-root user
-USER constants
-
-# Expose port
+# Expose the port
 EXPOSE 3001
 
 # Start the application
-CMD ["node", "dist/index.js"]
+CMD [ "node", "dist/index.js" ]
