@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constants SDK Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 0.5rem 0;
+        }
+        
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .status.loading {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+        
+        .code {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .real-time-updates {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .cache-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Constants Management SDK</h1>
+        <p>Live demonstration of the TypeScript SDK integration</p>
+    </div>
+
+    <div class="card">
+        <h2>SDK Configuration</h2>
+        <div>
+            <label>API Key:</label>
+            <input type="text" id="apiKey" value="demo-api-key-12345" placeholder="Enter your API key">
+        </div>
+        <div>
+            <label>Environment:</label>
+            <select id="environment">
+                <option value="development">Development</option>
+                <option value="staging">Staging</option>
+                <option value="production">Production</option>
+            </select>
+        </div>
+        <button onclick="initializeSDK()">Initialize SDK</button>
+        <div id="initStatus"></div>
+    </div>
+
+    <div class="card">
+        <h2>Get Single Constant</h2>
+        <div>
+            <label>Constant Key:</label>
+            <input type="text" id="constantKey" value="SITE_TITLE" placeholder="Enter constant key">
+        </div>
+        <button onclick="getConstant()">Get Constant</button>
+        <button onclick="getConstant(false)">Get Constant (No Cache)</button>
+        <div id="constantResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>Get Multiple Constants</h2>
+        <div>
+            <label>Constant Keys (comma-separated):</label>
+            <input type="text" id="constantKeys" value="SITE_TITLE,API_URL,THEME_COLOR" placeholder="Enter constant keys">
+        </div>
+        <button onclick="getConstants()">Get Constants</button>
+        <div id="constantsResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>Real-time Updates</h2>
+        <div>
+            <label>Subscribe to Key:</label>
+            <input type="text" id="subscribeKey" value="SITE_TITLE" placeholder="Enter constant key to watch">
+        </div>
+        <button onclick="subscribeToConstant()">Subscribe</button>
+        <button onclick="unsubscribeFromConstant()">Unsubscribe</button>
+        <div class="real-time-updates" id="realtimeUpdates">
+            <strong>Real-time Updates:</strong>
+            <div id="updatesList">No updates yet...</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Cache Management</h2>
+        <div class="cache-stats" id="cacheStats">
+            <div class="stat">
+                <div class="stat-value" id="cacheSize">-</div>
+                <div class="stat-label">Cache Size</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="hitRate">-</div>
+                <div class="stat-label">Hit Rate</div>
+            </div>
+        </div>
+        <button onclick="updateCacheStats()">Update Stats</button>
+        <button onclick="clearCache()">Clear All Cache</button>
+        <button onclick="clearCache('SITE_TITLE')">Clear SITE_TITLE Cache</button>
+    </div>
+
+    <div class="card">
+        <h2>Example Integration Code</h2>
+        <div class="code">
+// Initialize the SDK
+ConstantsManager.init({
+    apiKey: 'your-api-key',
+    environment: 'production',
+    cacheTTL: 300000, // 5 minutes
+    retryAttempts: 3
+});
+
+// Get a single constant
+const result = await ConstantsManager.getConstant('SITE_TITLE');
+if (result.success) {
+    document.title = result.data;
+}
+
+// Get multiple constants
+const constants = await ConstantsManager.getConstants(['SITE_TITLE', 'API_URL']);
+Object.entries(constants).forEach(([key, result]) => {
+    if (result.success) {
+        console.log(`${key}: ${result.data}`);
+    }
+});
+
+// Subscribe to real-time updates
+const unsubscribe = ConstantsManager.subscribe('SITE_TITLE', (key, newValue, oldValue) => {
+    console.log(`${key} changed from ${oldValue} to ${newValue}`);
+    document.title = newValue;
+});
+
+// Clean up when done
+// unsubscribe();
+// ConstantsManager.disconnect();
+        </div>
+    </div>
+
+    <!-- Include the SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script>
+        // Mock SDK implementation for demonstration
+        class MockConstantsSDK {
+            constructor(config) {
+                this.config = config;
+                this.cache = new Map();
+                this.subscribers = new Map();
+                this.mockData = {
+                    'SITE_TITLE': 'My Awesome Website',
+                    'API_URL': 'https://api.example.com',
+                    'THEME_COLOR': '#3b82f6',
+                    'MAX_ITEMS': 100,
+                    'VERSION': '1.0.0'
+                };
+            }
+
+            async getConstant(key, useCache = true) {
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                if (this.mockData[key]) {
+                    const value = this.mockData[key];
+                    if (useCache) {
+                        this.cache.set(key, { value, expiry: Date.now() + 300000 });
+                    }
+                    return {
+                        success: true,
+                        data: value,
+                        cached: useCache && this.cache.has(key),
+                        version: 1
+                    };
+                }
+                
+                return {
+                    success: false,
+                    error: 'Constant not found'
+                };
+            }
+
+            async getConstants(keys, useCache = true) {
+                const results = {};
+                for (const key of keys) {
+                    results[key] = await this.getConstant(key, useCache);
+                }
+                return results;
+            }
+
+            subscribe(key, callback) {
+                if (!this.subscribers.has(key)) {
+                    this.subscribers.set(key, []);
+                }
+                this.subscribers.get(key).push(callback);
+                
+                return () => {
+                    const callbacks = this.subscribers.get(key);
+                    if (callbacks) {
+                        const index = callbacks.indexOf(callback);
+                        if (index > -1) {
+                            callbacks.splice(index, 1);
+                        }
+                    }
+                };
+            }
+
+            simulateUpdate(key, newValue) {
+                const oldValue = this.mockData[key];
+                this.mockData[key] = newValue;
+                
+                const callbacks = this.subscribers.get(key);
+                if (callbacks) {
+                    callbacks.forEach(callback => callback(key, newValue, oldValue));
+                }
+            }
+
+            clearCache(key) {
+                if (key) {
+                    this.cache.delete(key);
+                } else {
+                    this.cache.clear();
+                }
+            }
+
+            getCacheStats() {
+                return {
+                    size: this.cache.size,
+                    hitRate: 0.85
+                };
+            }
+
+            disconnect() {
+                this.cache.clear();
+                this.subscribers.clear();
+            }
+        }
+
+        // Global SDK manager
+        const ConstantsManager = {
+            sdk: null,
+            
+            init(config) {
+                this.sdk = new MockConstantsSDK(config);
+            },
+            
+            async getConstant(key, useCache = true) {
+                if (!this.sdk) throw new Error('SDK not initialized');
+                return this.sdk.getConstant(key, useCache);
+            },
+            
+            async getConstants(keys, useCache = true) {
+                if (!this.sdk) throw new Error('SDK not initialized');
+                return this.sdk.getConstants(keys, useCache);
+            },
+            
+            subscribe(key, callback) {
+                if (!this.sdk) throw new Error('SDK not initialized');
+                return this.sdk.subscribe(key, callback);
+            },
+            
+            clearCache(key) {
+                if (!this.sdk) throw new Error('SDK not initialized');
+                this.sdk.clearCache(key);
+            },
+            
+            getCacheStats() {
+                if (!this.sdk) throw new Error('SDK not initialized');
+                return this.sdk.getCacheStats();
+            },
+            
+            disconnect() {
+                if (this.sdk) {
+                    this.sdk.disconnect();
+                    this.sdk = null;
+                }
+            }
+        };
+
+        // Demo functions
+        let currentUnsubscribe = null;
+
+        function initializeSDK() {
+            const apiKey = document.getElementById('apiKey').value;
+            const environment = document.getElementById('environment').value;
+            
+            if (!apiKey) {
+                showStatus('initStatus', 'Please enter an API key', 'error');
+                return;
+            }
+            
+            try {
+                ConstantsManager.init({
+                    apiKey,
+                    environment,
+                    cacheTTL: 300000,
+                    retryAttempts: 3
+                });
+                
+                showStatus('initStatus', `SDK initialized successfully for ${environment} environment`, 'success');
+            } catch (error) {
+                showStatus('initStatus', `Failed to initialize SDK: ${error.message}`, 'error');
+            }
+        }
+
+        async function getConstant(useCache = true) {
+            const key = document.getElementById('constantKey').value;
+            
+            if (!key) {
+                showStatus('constantResult', 'Please enter a constant key', 'error');
+                return;
+            }
+            
+            showStatus('constantResult', 'Loading...', 'loading');
+            
+            try {
+                const result = await ConstantsManager.getConstant(key, useCache);
+                
+                if (result.success) {
+                    const cacheText = result.cached ? ' (from cache)' : ' (from API)';
+                    showStatus('constantResult', 
+                        `${key}: ${JSON.stringify(result.data)}${cacheText}`, 'success');
+                } else {
+                    showStatus('constantResult', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus('constantResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getConstants() {
+            const keys = document.getElementById('constantKeys').value.split(',').map(k => k.trim());
+            
+            if (keys.length === 0 || keys[0] === '') {
+                showStatus('constantsResult', 'Please enter constant keys', 'error');
+                return;
+            }
+            
+            showStatus('constantsResult', 'Loading...', 'loading');
+            
+            try {
+                const results = await ConstantsManager.getConstants(keys);
+                
+                let html = '<div>';
+                Object.entries(results).forEach(([key, result]) => {
+                    if (result.success) {
+                        const cacheText = result.cached ? ' (cached)' : ' (fresh)';
+                        html += `<div><strong>${key}:</strong> ${JSON.stringify(result.data)}${cacheText}</div>`;
+                    } else {
+                        html += `<div><strong>${key}:</strong> <span style="color: #dc2626;">Error: ${result.error}</span></div>`;
+                    }
+                });
+                html += '</div>';
+                
+                document.getElementById('constantsResult').innerHTML = html;
+            } catch (error) {
+                showStatus('constantsResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function subscribeToConstant() {
+            const key = document.getElementById('subscribeKey').value;
+            
+            if (!key) {
+                alert('Please enter a constant key to subscribe to');
+                return;
+            }
+            
+            if (currentUnsubscribe) {
+                currentUnsubscribe();
+            }
+            
+            try {
+                currentUnsubscribe = ConstantsManager.subscribe(key, (key, newValue, oldValue) => {
+                    const updatesList = document.getElementById('updatesList');
+                    const timestamp = new Date().toLocaleTimeString();
+                    const update = `<div>[${timestamp}] ${key}: ${oldValue} → ${newValue}</div>`;
+                    updatesList.innerHTML = update + updatesList.innerHTML;
+                });
+                
+                document.getElementById('updatesList').innerHTML = `Subscribed to ${key}. Waiting for updates...`;
+                
+                // Simulate an update after 3 seconds
+                setTimeout(() => {
+                    if (ConstantsManager.sdk) {
+                        ConstantsManager.sdk.simulateUpdate(key, `Updated ${key} at ${new Date().toLocaleTimeString()}`);
+                    }
+                }, 3000);
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function unsubscribeFromConstant() {
+            if (currentUnsubscribe) {
+                currentUnsubscribe();
+                currentUnsubscribe = null;
+                document.getElementById('updatesList').innerHTML = 'Unsubscribed from updates';
+            }
+        }
+
+        function updateCacheStats() {
+            try {
+                const stats = ConstantsManager.getCacheStats();
+                document.getElementById('cacheSize').textContent = stats.size;
+                document.getElementById('hitRate').textContent = Math.round(stats.hitRate * 100) + '%';
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function clearCache(key) {
+            try {
+                ConstantsManager.clearCache(key);
+                const message = key ? `Cache cleared for ${key}` : 'All cache cleared';
+                alert(message);
+                updateCacheStats();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Initialize with demo values
+        window.addEventListener('load', () => {
+            initializeSDK();
+            updateCacheStats();
+        });
+    </script>
+</body>
+</html>

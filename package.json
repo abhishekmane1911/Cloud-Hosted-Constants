@@ -1,0 +1,35 @@
+{
+  "name": "constants-management-system",
+  "version": "1.0.0",
+  "description": "Cloud-hosted constants management system with TypeScript SDK and React dashboard",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:dashboard",
+    "dev:dashboard": "cd apps/dashboard && npm run dev",
+    "dev:api": "cd apps/api && npm run dev",
+    "build": "npm run build:sdk && npm run build:dashboard && npm run build:api",
+    "build:sdk": "cd packages/sdk && npm run build",
+    "build:dashboard": "cd apps/dashboard && npm run build",
+    "build:api": "cd apps/api && npm run build",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "k8s:deploy": "kubectl apply -f k8s/",
+    "k8s:delete": "kubectl delete -f k8s/"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

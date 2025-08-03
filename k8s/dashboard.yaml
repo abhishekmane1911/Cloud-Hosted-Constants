@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: constants-dashboard
+  namespace: constants-mgmt
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: constants-dashboard
+  template:
+    metadata:
+      labels:
+        app: constants-dashboard
+    spec:
+      containers:
+      - name: constants-dashboard
+        image: constants-mgmt/dashboard:latest
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: constants-dashboard
+  namespace: constants-mgmt
+spec:
+  selector:
+    app: constants-dashboard
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
